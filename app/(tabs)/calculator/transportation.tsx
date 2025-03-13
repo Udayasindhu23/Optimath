@@ -110,6 +110,90 @@ export default function TransportationMethod() {
     return { allocation, totalCost };
   };
 
+  const vogelsApproximationMethod = () => {
+    const supply = [...data.supply.map(s => parseFloat(s) || 0)];
+    const demand = [...data.demand.map(d => parseFloat(d) || 0)];
+    const costs = data.costs.map(row => row.map(cost => parseFloat(cost) || 0));
+    const numSources = supply.length;
+    const numDests = demand.length;
+    
+    const allocation = Array(numSources).fill(0).map(() => Array(numDests).fill(0));
+    const remainingSupply = [...supply];
+    const remainingDemand = [...demand];
+
+    while (Math.max(...remainingSupply) > 0.0001 && Math.max(...remainingDemand) > 0.0001) {
+      // Define penalties with explicit types
+      const penalties: { rows: number[]; cols: number[] } = { rows: [], cols: [] };
+
+      for (let i = 0; i < numSources; i++) {
+        if (remainingSupply[i] > 0.0001) {
+          const sortedCosts = costs[i].map((cost, j) => ({ cost, j })).filter((_, j) => remainingDemand[j] > 0.0001).sort((a, b) => a.cost - b.cost);
+          if (sortedCosts.length > 1) {
+            penalties.rows[i] = sortedCosts[1].cost - sortedCosts[0].cost;
+          } else {
+            penalties.rows[i] = Infinity;
+          }
+        } else {
+          penalties.rows[i] = -1;
+        }
+      }
+
+      for (let j = 0; j < numDests; j++) {
+        if (remainingDemand[j] > 0.0001) {
+          const sortedCosts = costs.map((row, i) => ({ cost: row[j], i })).filter((_, i) => remainingSupply[i] > 0.0001).sort((a, b) => a.cost - b.cost);
+          if (sortedCosts.length > 1) {
+            penalties.cols[j] = sortedCosts[1].cost - sortedCosts[0].cost;
+          } else {
+            penalties.cols[j] = Infinity;
+          }
+        } else {
+          penalties.cols[j] = -1;
+        }
+      }
+
+      // Find the highest penalty
+      let maxPenalty = -1;
+      let maxPenaltyIndex = -1;
+      let isRow = true;
+
+      for (let i = 0; i < numSources; i++) {
+        if (penalties.rows[i] > maxPenalty) {
+          maxPenalty = penalties.rows[i];
+          maxPenaltyIndex = i;
+          isRow = true;
+        }
+      }
+
+      for (let j = 0; j < numDests; j++) {
+        if (penalties.cols[j] > maxPenalty) {
+          maxPenalty = penalties.cols[j];
+          maxPenaltyIndex = j;
+          isRow = false;
+        }
+      }
+
+      // Allocate to the lowest cost cell in the row or column with the highest penalty
+      if (isRow) {
+        const sortedCosts = costs[maxPenaltyIndex].map((cost, j) => ({ cost, j })).filter((_, j) => remainingDemand[j] > 0.0001).sort((a, b) => a.cost - b.cost);
+        const j = sortedCosts[0].j;
+        const quantity = Math.min(remainingSupply[maxPenaltyIndex], remainingDemand[j]);
+        allocation[maxPenaltyIndex][j] = quantity;
+        remainingSupply[maxPenaltyIndex] -= quantity;
+        remainingDemand[j] -= quantity;
+      } else {
+        const sortedCosts = costs.map((row, i) => ({ cost: row[maxPenaltyIndex], i })).filter((_, i) => remainingSupply[i] > 0.0001).sort((a, b) => a.cost - b.cost);
+        const i = sortedCosts[0].i;
+        const quantity = Math.min(remainingSupply[i], remainingDemand[maxPenaltyIndex]);
+        allocation[i][maxPenaltyIndex] = quantity;
+        remainingSupply[i] -= quantity;
+        remainingDemand[maxPenaltyIndex] -= quantity;
+      }
+    }
+
+    const totalCost = calculateTotalCost(allocation);
+    return { allocation, totalCost };
+  };
+
   const calculateTotalCost = (allocation: number[][]) => {
     let totalCost = 0;
     const costs = data.costs.map(row => row.map(cost => parseFloat(cost) || 0));
@@ -152,11 +236,13 @@ export default function TransportationMethod() {
       // Get initial solutions
       const nwcSolution = northwestCornerMethod();
       const lcmSolution = leastCostMethod();
+      const vamSolution = vogelsApproximationMethod();
 
       // Create solutions array
       const solutions = [
         { method: 'Northwest Corner', allocation: nwcSolution.allocation, cost: nwcSolution.totalCost },
-        { method: 'Least Cost', allocation: lcmSolution.allocation, cost: lcmSolution.totalCost }
+        { method: 'Least Cost', allocation: lcmSolution.allocation, cost: lcmSolution.totalCost },
+        { method: "Vogel's Approximation", allocation: vamSolution.allocation, cost: vamSolution.totalCost }
       ];
 
       // Sort solutions by cost

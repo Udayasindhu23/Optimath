@@ -132,22 +132,18 @@ export default function GraphicalMethod() {
       };
     }
 
-    // Calculate the max bounds with proper scaling
-    const maxX = 50; // Fixed scale to match image
-    const maxY = 50; // Fixed scale to match image
+    const maxX = 50;
+    const maxY = 50;
 
-    // Generate grid lines
     const gridLines = {
       x: Array.from({ length: 6 }, (_, i) => i * 10),
       y: Array.from({ length: 6 }, (_, i) => i * 10)
     };
 
-    // Generate labels
     const labels = gridLines.x.map(x => x.toString());
 
     const datasets = [];
 
-    // Add grid lines
     datasets.push({
       data: gridLines.y,
       color: () => 'rgba(200, 200, 200, 0.5)',
@@ -155,9 +151,8 @@ export default function GraphicalMethod() {
       strokeWidth: 1
     });
 
-    // Add constraint lines
     if (solution.constraints) {
-      const colors = ['#0000FF', '#008000']; // Blue and Green for constraints
+      const colors = ['#FF0000', '#00FF00']; // Red and Green for constraints
       solution.constraints.forEach((c, i) => {
         if (c.x2 !== 0) {
           const points = [];
@@ -180,21 +175,18 @@ export default function GraphicalMethod() {
       });
     }
 
-    // Add feasible region shading
     if (solution.feasiblePoints && solution.feasiblePoints.length > 0) {
-      // Sort points to create proper polygon
       const sortedPoints = [...solution.feasiblePoints].sort((a, b) => {
         const angleA = Math.atan2(a.y, a.x);
         const angleB = Math.atan2(b.y, b.x);
         return angleA - angleB;
       });
 
-      // Create polygon path for shading
       datasets.push({
         data: sortedPoints.map(p => p.y),
-        color: () => 'rgba(200, 200, 200, 0.3)',
+        color: () => 'rgba(100, 100, 255, 0.3)',
         withDots: false,
-        fillColor: 'rgba(200, 200, 200, 0.3)',
+        fillColor: 'rgba(100, 100, 255, 0.3)',
         strokeWidth: 0
       });
     }
@@ -279,34 +271,38 @@ export default function GraphicalMethod() {
             <TextInput
               style={styles.input}
               value={constraint.x1}
-              onChangeText={(text) =>
-                setConstraints(constraints.map((c, i) =>
-                  i === index ? { ...c, x1: text } : c
-                ))
-              }
+              onChangeText={(text) => {
+                const newConstraints = [...constraints];
+                newConstraints[index] = { ...constraint, x1: text };
+                setConstraints(newConstraints);
+              }}
               keyboardType="numeric"
+              placeholder="x₁"
             />
-            <Text style={styles.equationText}>x + </Text>
+            <Text style={styles.equationText}>x₁ + </Text>
             <TextInput
               style={styles.input}
               value={constraint.x2}
-              onChangeText={(text) =>
-                setConstraints(constraints.map((c, i) =>
-                  i === index ? { ...c, x2: text } : c
-                ))
-              }
+              onChangeText={(text) => {
+                const newConstraints = [...constraints];
+                newConstraints[index] = { ...constraint, x2: text };
+                setConstraints(newConstraints);
+              }}
               keyboardType="numeric"
+              placeholder="x₂"
             />
-            <Text style={styles.equationText}>y </Text>
+            <Text style={styles.equationText}>x₂</Text>
             <TouchableOpacity
               style={styles.signButton}
               onPress={() => {
                 const signs: Array<'<=' | '>=' | '='> = ['<=', '>=', '='];
                 const currentIndex = signs.indexOf(constraint.sign);
-                const nextSign = signs[(currentIndex + 1) % signs.length];
-                setConstraints(constraints.map((c, i) =>
-                  i === index ? { ...c, sign: nextSign } : c
-                ));
+                const newConstraints = [...constraints];
+                newConstraints[index] = {
+                  ...constraint,
+                  sign: signs[(currentIndex + 1) % signs.length]
+                };
+                setConstraints(newConstraints);
               }}
             >
               <Text style={styles.signButtonText}>{constraint.sign}</Text>
@@ -314,19 +310,20 @@ export default function GraphicalMethod() {
             <TextInput
               style={styles.input}
               value={constraint.rhs}
-              onChangeText={(text) =>
-                setConstraints(constraints.map((c, i) =>
-                  i === index ? { ...c, rhs: text } : c
-                ))
-              }
+              onChangeText={(text) => {
+                const newConstraints = [...constraints];
+                newConstraints[index] = { ...constraint, rhs: text };
+                setConstraints(newConstraints);
+              }}
               keyboardType="numeric"
+              placeholder="RHS"
             />
           </View>
         ))}
         <TouchableOpacity
           style={styles.addButton}
           onPress={() =>
-            setConstraints([...constraints, { x1: '0', x2: '0', sign: '<=', rhs: '0' }])
+            setConstraints([...constraints, { x1: '', x2: '', sign: '<=', rhs: '' }])
           }
         >
           <Text style={styles.addButtonText}>Add Constraint</Text>
@@ -399,7 +396,7 @@ export default function GraphicalMethod() {
                   {solution.constraints?.map((c, i) => (
                     <View key={`constraint-${i}`} style={styles.legendItem}>
                       <View style={[styles.legendColor, { 
-                        backgroundColor: i === 0 ? '#0000FF' : '#008000',
+                        backgroundColor: i === 0 ? '#FF0000' : '#00FF00',
                         width: 20,
                         height: 2
                       }]} />
@@ -410,7 +407,7 @@ export default function GraphicalMethod() {
                   ))}
                   <View style={styles.legendItem}>
                     <View style={[styles.legendColor, { 
-                      backgroundColor: 'rgba(200, 200, 200, 0.3)',
+                      backgroundColor: 'rgba(100, 100, 255, 0.3)',
                       width: 20,
                       height: 20
                     }]} />

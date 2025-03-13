@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Calculator } from 'lucide-react-native';
+import { GitBranch } from 'lucide-react-native';
 
 interface Constraint {
   x1: string;
@@ -237,7 +237,7 @@ export default function SimplexMethod() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.iconContainer}>
-          <Calculator size={32} color="#E91E63" />
+          <GitBranch size={32} color="#C41E7F" />
         </View>
         <Text style={styles.title}>Simplex Method</Text>
       </View>
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: '#FCE4EC',
+    backgroundColor: '#FBD5E8',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   solveButton: {
-    backgroundColor: '#E91E63',
+    backgroundColor: '#EC4899',
     padding: 16,
     borderRadius: 8,
     marginTop: 20,
