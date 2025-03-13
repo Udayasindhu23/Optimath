@@ -56,15 +56,15 @@ export default function BranchAndBound() {
     numVars: 2,
     objective: {
       type: 'max',
-      x1: '1',
-      x2: '1',
+      x1: '',
+      x2: '',
     },
     constraints: [
       {
-        x1: '1',
-        x2: '1',
+        x1: '',
+        x2: '',
         sign: '<=',
-        rhs: '5',
+        rhs: '',
       },
     ],
     integerVariables: [true, true],
@@ -361,7 +361,7 @@ export default function BranchAndBound() {
               value={data.objective.x1}
               onChangeText={(value) => updateObjectiveCoefficient('x1', value)}
               keyboardType="numeric"
-              placeholder="0"
+              placeholder="x₁"
             />
             <Text style={styles.variableText}>x₁</Text>
           </View>
@@ -372,7 +372,7 @@ export default function BranchAndBound() {
               value={data.objective.x2}
               onChangeText={(value) => updateObjectiveCoefficient('x2', value)}
               keyboardType="numeric"
-              placeholder="0"
+              placeholder="x₂"
             />
             <Text style={styles.variableText}>x₂</Text>
           </View>
@@ -390,7 +390,7 @@ export default function BranchAndBound() {
                 value={constraint.x1}
                 onChangeText={(value) => updateConstraint(constraintIndex, 'x1', value)}
                 keyboardType="numeric"
-                placeholder="0"
+                placeholder="x₁"
               />
               <Text style={styles.variableText}>x₁</Text>
             </View>
@@ -401,7 +401,7 @@ export default function BranchAndBound() {
                 value={constraint.x2}
                 onChangeText={(value) => updateConstraint(constraintIndex, 'x2', value)}
                 keyboardType="numeric"
-                placeholder="0"
+                placeholder="x₂"
               />
               <Text style={styles.variableText}>x₂</Text>
             </View>
@@ -756,20 +756,19 @@ const styles = StyleSheet.create({
     fontWeight: '500' as const,
   },
   addButton: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
+    backgroundColor: '#f1f5f9',
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#f8f9fa',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderStyle: 'dashed' as const,
+    borderColor: '#e2e8f0',
   },
   addButtonText: {
     fontSize: 14,
-    fontWeight: '500' as const,
-    color: '#666',
+    color: '#08172E',
+    fontWeight: '500',
+    textAlign: 'center',
   },
   solveButton: {
     backgroundColor: '#FFA500',
