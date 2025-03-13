@@ -62,7 +62,7 @@ export default function DualityMethod() {
       x1: '',
       x2: '',
       x3: '',
-      numVars: 2
+      numVars: 3
     },
     constraints: [
       { x1: '', x2: '', x3: '', sign: '<=', rhs: '' },
@@ -497,6 +497,20 @@ export default function DualityMethod() {
             />
             <Text style={styles.smallText}>x₂</Text>
           </View>
+          <Text style={styles.smallText}>+</Text>
+          <View style={styles.inputGroup}>
+            <TextInput
+              style={styles.smallInput}
+              value={formData.objective.x3}
+              onChangeText={(text) => setFormData({
+                ...formData,
+                objective: { ...formData.objective, x3: text }
+              })}
+              keyboardType="numeric"
+              placeholder="x₃"
+            />
+            <Text style={styles.smallText}>x₃</Text>
+          </View>
         </View>
 
         {/* Constraints */}
@@ -532,6 +546,21 @@ export default function DualityMethod() {
                   placeholder="x₂"
                 />
                 <Text style={styles.smallText}>x₂</Text>
+              </View>
+              <Text style={styles.smallText}>+</Text>
+              <View style={styles.inputGroup}>
+                <TextInput
+                  style={styles.smallInput}
+                  value={constraint.x3}
+                  onChangeText={(text) => {
+                    const newConstraints = [...formData.constraints];
+                    newConstraints[index] = { ...constraint, x3: text };
+                    setFormData({ ...formData, constraints: newConstraints });
+                  }}
+                  keyboardType="numeric"
+                  placeholder="x₃"
+                />
+                <Text style={styles.smallText}>x₃</Text>
               </View>
               <TouchableOpacity
                 style={styles.smallSignButton}
@@ -583,6 +612,7 @@ export default function DualityMethod() {
                   <Text style={styles.solutionText}>Status: Optimal solution found</Text>
                   <Text style={styles.solutionText}>x₁ = {solution.primal.solution[0].toFixed(4)}</Text>
                   <Text style={styles.solutionText}>x₂ = {solution.primal.solution[1].toFixed(4)}</Text>
+                  <Text style={styles.solutionText}>x₃ = {solution.primal.solution[2].toFixed(4)}</Text>
                   <Text style={styles.solutionText}>
                     Optimal Value: {solution.primal.objectiveValue.toFixed(4)}
                   </Text>
@@ -605,6 +635,7 @@ export default function DualityMethod() {
                   <Text style={styles.solutionText}>Status: Optimal solution found</Text>
                   <Text style={styles.solutionText}>y₁ = {solution.dual.solution[0].toFixed(4)}</Text>
                   <Text style={styles.solutionText}>y₂ = {solution.dual.solution[1].toFixed(4)}</Text>
+                  <Text style={styles.solutionText}>y₃ = {solution.dual.solution[2].toFixed(4)}</Text>
                   <Text style={styles.solutionText}>
                     Optimal Value: {solution.dual.objectiveValue.toFixed(4)}
                   </Text>
