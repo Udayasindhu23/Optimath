@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const topics = {
   linear: {
@@ -107,6 +107,14 @@ const topics = {
 export default function TopicDetail() {
   const { id } = useLocalSearchParams();
   const topic = topics[id as keyof typeof topics];
+  const router = useRouter();
+
+  const navigateToDescription = (title: string, description: string) => {
+    router.push({
+      pathname: '/(tabs)/topics/description',
+      params: { title, description }
+    } as any);
+  };
 
   if (!topic) {
     return (
@@ -124,10 +132,21 @@ export default function TopicDetail() {
 
       <View style={styles.content}>
         {topic.subtopics.map((subtopic, index) => (
-          <View key={index} style={styles.subtopic}>
-            <Text style={styles.subtopicTitle}>{subtopic.title}</Text>
-            <Text style={styles.subtopicDescription}>{subtopic.description}</Text>
-          </View>
+          subtopic.title === 'Graphical Method' ? (
+            <TouchableOpacity 
+              key={index} 
+              style={styles.subtopic}
+              onPress={() => navigateToDescription(subtopic.title, subtopic.description)}
+            >
+              <Text style={styles.subtopicTitle}>{subtopic.title}</Text>
+              <Text style={styles.subtopicDescription}>{subtopic.description}</Text>
+            </TouchableOpacity>
+          ) : (
+            <View key={index} style={styles.subtopic}>
+              <Text style={styles.subtopicTitle}>{subtopic.title}</Text>
+              <Text style={styles.subtopicDescription}>{subtopic.description}</Text>
+            </View>
+          )
         ))}
       </View>
     </ScrollView>
