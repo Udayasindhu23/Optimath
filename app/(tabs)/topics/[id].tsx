@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const topics = {
@@ -109,13 +110,6 @@ export default function TopicDetail() {
   const topic = topics[id as keyof typeof topics];
   const router = useRouter();
 
-  const navigateToDescription = (title: string, description: string) => {
-    router.push({
-      pathname: '/(tabs)/topics/description',
-      params: { title, description }
-    } as any);
-  };
-
   if (!topic) {
     return (
       <View style={styles.container}>
@@ -124,32 +118,56 @@ export default function TopicDetail() {
     );
   }
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{topic.title}</Text>
-      </View>
+  const handleSubtopicPress = (subtopic: string) => {
+    console.log(`Subtopic clicked: ${subtopic}`);
 
-      <View style={styles.content}>
-        {topic.subtopics.map((subtopic, index) => (
-          subtopic.title === 'Graphical Method' ? (
+    if (subtopic === 'Graphical Method') {
+      router.push('/topics/graphical-method');
+    } else if (subtopic === 'Simplex Method') {
+      router.push('/topics/simplex-method');
+    } else if (subtopic === 'Transportation Problem') {
+      router.push('/topics/transportation-problem');
+    } else if (subtopic === 'Duality Concept') {
+      router.push('/topics/duality-concept');
+    } else if (subtopic === 'Farkas\' Lemma') {
+      router.push('/topics/farkas-lemma');
+    } else if (subtopic === 'Karmarkar\'s Algorithm') {
+      router.push('/topics/karmarkars-algorithm');
+    } else if (subtopic === 'Branch & Bound') {
+      router.push('/topics/branch-and-bound');
+    } else if (subtopic === 'Knapsack Problem') {
+      router.push('/topics/knapsack-problem');
+    } else if (subtopic === 'Travelling Salesman Problem') {
+      router.push('/topics/travelling-salesman-problem');
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Text style={styles.backArrow}>←</Text>
+        <Text style={styles.backButtonText}>Back</Text>
+      </TouchableOpacity>
+
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{topic.title}</Text>
+        </View>
+
+        <View style={styles.content}>
+          {topic.subtopics.map((subtopic, index) => (
             <TouchableOpacity 
               key={index} 
               style={styles.subtopic}
-              onPress={() => navigateToDescription(subtopic.title, subtopic.description)}
+              onPress={() => handleSubtopicPress(subtopic.title)}
             >
               <Text style={styles.subtopicTitle}>{subtopic.title}</Text>
               <Text style={styles.subtopicDescription}>{subtopic.description}</Text>
             </TouchableOpacity>
-          ) : (
-            <View key={index} style={styles.subtopic}>
-              <Text style={styles.subtopicTitle}>{subtopic.title}</Text>
-              <Text style={styles.subtopicDescription}>{subtopic.description}</Text>
-            </View>
-          )
-        ))}
-      </View>
-    </ScrollView>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -157,6 +175,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#f1f5f9',
+  },
+  backArrow: {
+    fontSize: 18,
+    marginRight: 8,
+    color: '#1e293b',
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#1e293b',
   },
   header: {
     padding: 24,
