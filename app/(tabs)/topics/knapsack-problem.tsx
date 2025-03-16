@@ -9,7 +9,7 @@ export default function KnapsackProblemExplanation() {
     <View style={styles.container}>
       <TouchableOpacity 
         style={styles.backButton} 
-        onPress={() => router.back()}
+        onPress={() => router.push('/topics/combinatorial')}
       >
         <Text style={styles.backArrow}>←</Text>
         <Text style={styles.backButtonText}>Back</Text>
