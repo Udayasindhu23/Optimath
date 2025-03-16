@@ -121,51 +121,66 @@ export default function GraphicalMethod() {
   };
 
   const getChartData = () => {
-    if (!solution?.feasiblePoints || solution.feasiblePoints.length === 0) {
-      return {
-        labels: ['0', '10', '20', '30', '40', '50'],
-        datasets: [{
-          data: [0],
-          color: () => 'transparent',
-          withDots: false
-        }]
-      };
+    if (!solution?.constraints || solution.constraints.length === 0) {
+      return { labels: ['0'], datasets: [{ data: [0] }] };
     }
 
-    const maxX = 50;
-    const maxY = 50;
-
+    // Simple calculation of chart bounds
+    const points = solution.feasiblePoints || [];
+    let maxX = Math.max(...points.map(p => p.x), 10) * 1.2;
+    let maxY = Math.max(...points.map(p => p.y), 10) * 1.2;
+    
+    maxX = Math.ceil(maxX / 10) * 10;
+    maxY = Math.ceil(maxY / 10) * 10;
+    
+    // Simple grid lines
     const gridLines = {
-      x: Array.from({ length: 6 }, (_, i) => i * 10),
-      y: Array.from({ length: 6 }, (_, i) => i * 10)
+      x: [0, maxX/4, maxX/2, 3*maxX/4, maxX],
+      y: [0, maxY/4, maxY/2, 3*maxY/4, maxY]
     };
 
-    const labels = gridLines.x.map(x => x.toString());
-
+    const labels = gridLines.x.map(x => Math.round(x).toString());
     const datasets = [];
 
+    // Basic initialization
     datasets.push({
-      data: gridLines.y,
-      color: () => 'rgba(200, 200, 200, 0.5)',
-      withDots: false,
-      strokeWidth: 1
+      data: [0],
+      color: () => 'transparent',
+      withDots: false
     });
 
+    // Draw constraint lines
+    const colors = ['#d62828', '#219ebc', '#4a7c59', '#774936', '#52796f'];
     if (solution.constraints) {
-      const colors = ['#FF0000', '#00FF00']; // Red and Green for constraints
       solution.constraints.forEach((c, i) => {
         if (c.x2 !== 0) {
-          const points = [];
-          for (let x = 0; x <= maxX; x += maxX / 200) {
+          const linePoints = [];
+          const xValues = [];
+          
+          // Calculate line points
+          for (let x = 0; x <= maxX; x += maxX/100) {
             const y = (c.rhs - c.x1 * x) / c.x2;
             if (y >= 0 && y <= maxY) {
-              points.push(y);
+              linePoints.push(y);
+              xValues.push(x);
             }
           }
           
-          if (points.length > 0) {
+          if (linePoints.length > 0) {
             datasets.push({
-              data: points,
+              data: linePoints,
+              xValues,
+              color: () => colors[i % colors.length],
+              strokeWidth: 2,
+              withDots: false
+            });
+          }
+        } else if (c.x1 !== 0) {
+          const x = c.rhs / c.x1;
+          if (x >= 0 && x <= maxX) {
+            datasets.push({
+              data: [0, maxY],
+              xValues: [x, x],
               color: () => colors[i % colors.length],
               strokeWidth: 2,
               withDots: false
@@ -175,37 +190,123 @@ export default function GraphicalMethod() {
       });
     }
 
-    if (solution.feasiblePoints && solution.feasiblePoints.length > 0) {
-      const sortedPoints = [...solution.feasiblePoints].sort((a, b) => {
-        const angleA = Math.atan2(a.y, a.x);
-        const angleB = Math.atan2(b.y, b.x);
-        return angleA - angleB;
+    // Calculate ALL intersection points between constraints
+    const allIntersections = [];
+    
+    // Add axis intersections
+    for (const c of solution.constraints) {
+      if (c.x2 !== 0) allIntersections.push({ x: 0, y: c.rhs / c.x2 });
+      if (c.x1 !== 0) allIntersections.push({ x: c.rhs / c.x1, y: 0 });
+    }
+    
+    // Find intersections between constraints
+    for (let i = 0; i < solution.constraints.length; i++) {
+      for (let j = i + 1; j < solution.constraints.length; j++) {
+        const c1 = solution.constraints[i];
+        const c2 = solution.constraints[j];
+        
+        // Calculate determinant
+        const det = c1.x1 * c2.x2 - c2.x1 * c1.x2;
+        
+        if (Math.abs(det) > 0.000001) { // Not parallel
+          const x = (c1.rhs * c2.x2 - c2.rhs * c1.x2) / det;
+          const y = (c1.x1 * c2.rhs - c2.x1 * c1.rhs) / det;
+          
+          // Only add points in the first quadrant
+          if (x >= 0 && y >= 0 && x <= maxX && y <= maxY) {
+            allIntersections.push({ x, y });
+          }
+        }
+      }
+    }
+    
+    // Add all intersection points with a distinct style
+    allIntersections.forEach(point => {
+      datasets.push({
+        data: [point.y],
+        xValues: [point.x],
+        color: () => 'rgba(44, 62, 80, 0.15)',
+        strokeWidth: 0,
+        withDots: true,
+        dotColor: 'rgba(44, 62, 80, 0.15)',
+        dotSize: 12
+      });
+      
+      datasets.push({
+        data: [point.y],
+        xValues: [point.x],
+        color: () => '#2c3e50',
+        strokeWidth: 0,
+        withDots: true,
+        dotColor: '#2c3e50',
+        dotSize: 7
+      });
+    });
+
+    // Make the optimal point very prominent
+    if (solution.optimalPoint) {
+      // First outer glow for emphasis
+      datasets.push({
+        data: [solution.optimalPoint.y],
+        xValues: [solution.optimalPoint.x],
+        color: () => 'rgba(231, 76, 60, 0.3)',
+        strokeWidth: 0,
+        withDots: true,
+        dotColor: 'rgba(231, 76, 60, 0.3)',
+        dotSize: 30
+      });
+      
+      // Second glow layer
+      datasets.push({
+        data: [solution.optimalPoint.y],
+        xValues: [solution.optimalPoint.x],
+        color: () => 'rgba(231, 76, 60, 0.1)',
+        strokeWidth: 0,
+        withDots: true,
+        dotColor: 'rgba(231, 76, 60, 0.1)',
+        dotSize: 60
+      });
+      
+      // Main dot
+      datasets.push({
+        data: [solution.optimalPoint.y],
+        xValues: [solution.optimalPoint.x],
+        color: () => '#e74c3c',
+        strokeWidth: 0,
+        withDots: true,
+        dotColor: '#e74c3c',
+        dotSize: 12
+      });
+      
+      // Center highlight
+      datasets.push({
+        data: [solution.optimalPoint.y],
+        xValues: [solution.optimalPoint.x],
+        color: () => '#ffffff',
+        strokeWidth: 0,
+        withDots: true,
+        dotColor: '#ffffff',
+        dotSize: 5
       });
 
+      // Add an annotation/label for the optimal point
       datasets.push({
-        data: sortedPoints.map(p => p.y),
-        color: () => 'rgba(100, 100, 255, 0.3)',
+        data: [solution.optimalPoint.y + maxY * 0.05],  // Position slightly above the point
+        xValues: [solution.optimalPoint.x],
         withDots: false,
-        fillColor: 'rgba(100, 100, 255, 0.3)',
-        strokeWidth: 0
+        color: () => 'transparent',
+        // This requires chart-kit decoration or custom rendering
+        customDataPoint: () => (
+          <Text style={{color: '#e74c3c', fontWeight: 'bold', fontSize: 12}}>
+            Optimal
+          </Text>
+        )
       });
     }
 
     return {
       labels,
-      datasets,
-      gridMin: 0,
-      gridMax: maxY,
-      scaleX: {
-        min: 0,
-        max: maxX,
-        ticks: gridLines.x
-      },
-      scaleY: {
-        min: 0,
-        max: maxY,
-        ticks: gridLines.y
-      }
+      datasets
     };
   };
 
@@ -340,11 +441,15 @@ export default function GraphicalMethod() {
           <View style={styles.solutionContainer}>
             {solution.status === 'optimal' ? (
               <>
-                <Text style={styles.solutionText}>
-                  Optimal point: ({solution.optimalPoint?.x.toFixed(2)}, {solution.optimalPoint?.y.toFixed(2)})
-                </Text>
-                <Text style={styles.solutionText}>
-                  Optimal value: {solution.optimalValue?.toFixed(2)}
+                <Text style={styles.solutionHeader}>Optimal Solution</Text>
+                <View style={styles.optimalPointContainer}>
+                  <View style={styles.optimalDot} />
+                  <Text style={styles.optimalPointText}>
+                    Optimal Point: ({solution.optimalPoint?.x.toFixed(2)}, {solution.optimalPoint?.y.toFixed(2)})
+                  </Text>
+                </View>
+                <Text style={styles.optimalValueText}>
+                  Optimal Value: {solution.optimalValue?.toFixed(2)}
                 </Text>
               </>
             ) : (
@@ -355,11 +460,16 @@ export default function GraphicalMethod() {
           {solution.status === 'optimal' && (
             <View style={styles.section}>
               <Text style={styles.graphTitle}>Graphical Solution of Linear Programming Problem</Text>
-              <View style={styles.chartContainer}>
+              <View style={[styles.chartContainer, {
+                backgroundColor: '#ffffff',
+                shadowColor: 'transparent',
+                shadowOpacity: 0,
+                elevation: 0
+              }]}>
                 <LineChart
                   data={getChartData()}
                   width={Dimensions.get('window').width - 32}
-                  height={400}
+                  height={300}
                   chartConfig={{
                     backgroundColor: '#ffffff',
                     backgroundGradientFrom: '#ffffff',
@@ -367,51 +477,54 @@ export default function GraphicalMethod() {
                     decimalPlaces: 0,
                     color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
                     labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                    style: {
-                      borderRadius: 0
-                    },
                     propsForBackgroundLines: {
                       strokeWidth: 1,
-                      stroke: 'rgba(200, 200, 200, 0.5)',
-                      strokeDasharray: []
+                      stroke: '#e0e0e0'
                     },
                     propsForLabels: {
-                      fontSize: 12
+                      fontSize: 10
                     }
                   }}
                   style={{
-                    marginVertical: 8,
-                    borderRadius: 0
+                    marginVertical: 8
                   }}
                   bezier={false}
                   withInnerLines={true}
                   withOuterLines={true}
-                  withVerticalLines={true}
-                  withHorizontalLines={true}
                   fromZero={true}
-                  yAxisLabel=""
-                  xAxisLabel=""
                 />
                 <View style={styles.legendContainer}>
                   {solution.constraints?.map((c, i) => (
                     <View key={`constraint-${i}`} style={styles.legendItem}>
                       <View style={[styles.legendColor, { 
-                        backgroundColor: i === 0 ? '#FF0000' : '#00FF00',
-                        width: 20,
-                        height: 2
+                        backgroundColor: ['#d62828', '#219ebc', '#4a7c59', '#774936', '#52796f'][i % 5],
+                        width: 16,
+                        height: 3
                       }]} />
                       <Text style={styles.legendText}>
-                        {`${c.x1}x₁ + ${c.x2}x₂ = ${c.rhs}`}
+                        {`${c.x1}x₁ + ${c.x2}x₂ ${c.sign} ${c.rhs}`}
                       </Text>
                     </View>
                   ))}
+                  
                   <View style={styles.legendItem}>
                     <View style={[styles.legendColor, { 
-                      backgroundColor: 'rgba(100, 100, 255, 0.3)',
-                      width: 20,
-                      height: 20
+                      backgroundColor: '#2c3e50',
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4
                     }]} />
-                    <Text style={styles.legendText}>Feasible Region</Text>
+                    <Text style={styles.legendText}>Intersection Points</Text>
+                  </View>
+                  
+                  <View style={styles.legendItem}>
+                    <View style={[styles.legendColor, { 
+                      backgroundColor: '#e74c3c',
+                      width: 10,
+                      height: 10,
+                      borderRadius: 5
+                    }]} />
+                    <Text style={styles.legendText}>Optimal Solution</Text>
                   </View>
                 </View>
               </View>
@@ -553,17 +666,39 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   solutionContainer: {
-    marginTop: 24,
-    backgroundColor: '#f8fafc',
+    marginTop: 16,
     padding: 16,
+    backgroundColor: '#f8f9fa',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderLeftWidth: 4,
+    borderLeftColor: '#e74c3c',
   },
-  solutionText: {
-    fontSize: 14,
-    color: '#08172E',
+  solutionHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#2c3e50',
+  },
+  optimalPointContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
+  },
+  optimalDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#e74c3c',
+    marginRight: 8,
+  },
+  optimalPointText: {
+    fontSize: 16,
+    color: '#2c3e50',
+  },
+  optimalValueText: {
+    fontSize: 16,
+    color: '#2c3e50',
+    fontWeight: '500',
   },
   graphTitle: {
     fontSize: 16,
@@ -582,6 +717,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     flexDirection: 'column',
     gap: 8,
+    paddingHorizontal: 8,
   },
   legendItem: {
     flexDirection: 'row',
@@ -589,11 +725,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   legendColor: {
-    marginRight: 8,
+    marginRight: 4,
   },
   legendText: {
-    fontSize: 14,
-    color: '#000000',
+    fontSize: 12,
+    color: '#333333',
+    fontWeight: '500',
   },
   header: {
     flexDirection: 'row',
@@ -619,5 +756,11 @@ const styles = StyleSheet.create({
     color: '#64748b',
     lineHeight: 24,
     marginBottom: 32,
+  },
+  solutionText: {
+    fontSize: 16,
+    color: '#2c3e50',
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
