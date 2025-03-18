@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, BookOpen, Calculator, Settings } from 'lucide-react-native';
+import { Home, Calculator, FolderIcon } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -8,37 +8,37 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: '#ffffff',
-          borderTopColor: '#e5e5e5',
+          borderTopWidth: 0,
+          height: 60,
+          elevation: 0,
+          shadowOpacity: 0,
         },
-        tabBarActiveTintColor: '#3b82f6',
-        tabBarInactiveTintColor: '#64748b',
+        tabBarActiveTintColor: '#0066FF',
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ size, color }) => <Home size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="topics"
-        options={{
-          title: 'Topics',
-          tabBarIcon: ({ size, color }) => <BookOpen size={size} color={color} />,
+          tabBarIcon: ({ color }) => <Home size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="calculator"
         options={{
           title: 'Calculator',
-          tabBarIcon: ({ size, color }) => <Calculator size={size} color={color} />,
+          tabBarIcon: ({ color }) => <Calculator size={22} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="topics"
         options={{
-          title: 'Settings',
-          tabBarIcon: ({ size, color }) => <Settings size={size} color={color} />,
+          title: 'Topics',
+          tabBarIcon: ({ color }) => <FolderIcon size={22} color={color} />,
         }}
       />
     </Tabs>
