@@ -112,10 +112,10 @@ export default function BranchAndBound() {
       constraints: [
         ...data.constraints,
         {
-          x1: '0',
-          x2: '0',
+          x1: '',
+          x2: '',
           sign: '<=',
-          rhs: '0',
+          rhs: '',
         },
       ],
     });
@@ -228,13 +228,20 @@ export default function BranchAndBound() {
   };
 
   const solveBranchAndBound = () => {
+    // Check if any required fields are empty
+    if (!data.objective.x1 || !data.objective.x2 || 
+        data.constraints.some(c => !c.x1 || !c.x2 || !c.rhs)) {
+      // Show error or alert that all fields must be filled
+      return;
+    }
+
     // Convert input data to numbers
-    const c = [parseFloat(data.objective.x1) || 0, parseFloat(data.objective.x2) || 0];
+    const c = [parseFloat(data.objective.x1), parseFloat(data.objective.x2)];
     const A = data.constraints.map(constraint => [
-      parseFloat(constraint.x1) || 0,
-      parseFloat(constraint.x2) || 0,
+      parseFloat(constraint.x1),
+      parseFloat(constraint.x2),
     ]);
-    const b = data.constraints.map(constraint => parseFloat(constraint.rhs) || 0);
+    const b = data.constraints.map(constraint => parseFloat(constraint.rhs));
     
     // Initialize bounds for variables
     let bounds: [number, number][] = Array(data.numVars).fill([0, 5]);
